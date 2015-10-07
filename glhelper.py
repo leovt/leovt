@@ -14,6 +14,7 @@ import ctypes
 render_program = None
 copy_program = None
 framebuffer = None
+window = None
 
 FB_WIDTH = 30
 FB_HEIGHT = 20
@@ -160,8 +161,7 @@ def setup_render_program():
         }
     '''
 
-    global render_program
-    render_program = ShaderProgram(vertex_shader, fragment_shader, [
+    return ShaderProgram(vertex_shader, fragment_shader, [
         ('position', gl.GL_FLOAT, 2),
         ('color', gl.GL_FLOAT, 4),
     ])
@@ -193,8 +193,7 @@ def setup_copy_program():
         }
     '''
 
-    global copy_program
-    copy_program = ShaderProgram(vertex_shader, fragment_shader, [
+    return ShaderProgram(vertex_shader, fragment_shader, [
         ('position', gl.GL_FLOAT, 2),
         ('texcoord', gl.GL_FLOAT, 2),
     ])
@@ -300,12 +299,15 @@ def main():
     global framebuffer
     framebuffer = Framebuffer()
 
-    setup_render_program()
-    setup_copy_program()
+    global render_program
+    render_program = setup_render_program()
+
+    global copy_program
+    copy_program = setup_copy_program()
 
     print('OpenGL Version {}'.format(window.context.get_info().get_version()))
     window.on_draw = draw
-    pyglet.clock.schedule_interval(lambda dt:None, 0.01)
+    pyglet.clock.schedule_interval(lambda dt: None, 0.01)
     pyglet.app.run()
 
 
