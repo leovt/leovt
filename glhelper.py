@@ -116,11 +116,11 @@ class ShaderProgram:
         gl.glBindBuffer(gl.GL_ARRAY_BUFFER, 0)
 
 
-    def begin_draw(self):
+    def __enter__(self):
         gl.glUseProgram(self.program_name)
         gl.glBindVertexArray(self.vertex_array_name)
 
-    def end_draw(self):
+    def __exit__(self, *unused):
         gl.glUseProgram(0)
         gl.glBindVertexArray(0)
 
@@ -206,35 +206,25 @@ def draw():
 
 def render_to_texture():
     # select the target to draw into
-    framebuffer.begin_draw()
+    with framebuffer:
+        gl.glViewport(0, 0, FB_WIDTH, FB_HEIGHT)
 
-    gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, framebuffer.framebuffer)
-    draw_buffers = (gl.GLenum * 1)(gl.GL_COLOR_ATTACHMENT0)
-    gl.glDrawBuffers(1, draw_buffers)
-    gl.glViewport(0, 0, FB_WIDTH, FB_HEIGHT)
+        # clear the destination
+        gl.glClearColor(0.5, 0.6, 0.7, 1.0)
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
-    # clear the destination
-    gl.glClearColor(0.5, 0.6, 0.7, 1.0)
-    gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+        # send the vertex data
+        render_program.send_data([
+            ((-0.6, -0.5), (1.0, 0.0, 0.0, 1.0)),
+            ((0.6, -0.5), (0.0, 1.0, 0.0, 1.0)),
+            ((0.0, 0.5), (0.0, 0.0, 1.0, 1.0))])
 
-    # send the vertex data
-    render_program.send_data([
-        ((-0.6, -0.5), (1.0, 0.0, 0.0, 1.0)),
-        ((0.6, -0.5), (0.0, 1.0, 0.0, 1.0)),
-        ((0.0, 0.5), (0.0, 0.0, 1.0, 1.0))])
-
-    # draw using the vertex array for vertex information
-    render_program.begin_draw()
-    gl.glDrawArrays(gl.GL_TRIANGLES, 0, 3)
-    render_program.end_draw()
-    framebuffer.end_draw()
+        # draw using the vertex array for vertex information
+        with render_program:
+            gl.glDrawArrays(gl.GL_TRIANGLES, 0, 3)
 
 
 def copy_texture_to_screen():
-    # select the target to draw into
-    gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
-    gl.glViewport(0, 0, window.width, window.height)
-
     # clear the destination
     gl.glClearColor(0.4, 0.4, 0.4, 1.0)
     gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
@@ -252,43 +242,54 @@ def copy_texture_to_screen():
         ((0.6, 1.0), (0.0, 0.0))])
 
     # draw
-    copy_program.begin_draw()
-    gl.glBindTexture(gl.GL_TEXTURE_2D, framebuffer.rendered_texture)
-    gl.glDrawArrays(gl.GL_QUADS, 0, 8)
-    gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
-    copy_program.end_draw()
+    with copy_program, framebuffer.rendered_texture:
+        gl.glDrawArrays(gl.GL_QUADS, 0, 8)
+
+
+class Texture:
+    def __init__(self):
+        self.name = gl.GLuint(0)
+        gl.glGenTextures(1, ctypes.byref(self.name))
+
+    def __enter__(self):
+        gl.glBindTexture(gl.GL_TEXTURE_2D, self.name)
+
+    def __exit__(self, *unused):
+        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
 
 
 class Framebuffer:
     def __init__(self):
         self.framebuffer = gl.GLuint(0)
-        self.rendered_texture = gl.GLuint(0)
+        self.rendered_texture = Texture()
 
         gl.glGenFramebuffers(1, ctypes.byref(self.framebuffer))
-        gl.glGenTextures(1, ctypes.byref(self.rendered_texture))
 
         gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.framebuffer)
 
         # Set up the texture as the target for color output
-        gl.glBindTexture(gl.GL_TEXTURE_2D, self.rendered_texture)
-        gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGB, FB_WIDTH, FB_HEIGHT, 0, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, 0)
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
-        gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
-        gl.glFramebufferTexture2D(gl.GL_FRAMEBUFFER, gl.GL_COLOR_ATTACHMENT0, gl.GL_TEXTURE_2D, self.rendered_texture, 0)
-        gl.glBindTexture(gl.GL_TEXTURE_2D, 0)
+        with self.rendered_texture:
+            gl.glTexImage2D(gl.GL_TEXTURE_2D, 0, gl.GL_RGB, FB_WIDTH, FB_HEIGHT, 0, gl.GL_RGB, gl.GL_UNSIGNED_BYTE, 0)
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MAG_FILTER, gl.GL_NEAREST)
+            gl.glTexParameteri(gl.GL_TEXTURE_2D, gl.GL_TEXTURE_MIN_FILTER, gl.GL_NEAREST)
+            gl.glFramebufferTexture2D(gl.GL_FRAMEBUFFER, gl.GL_COLOR_ATTACHMENT0, gl.GL_TEXTURE_2D, self.rendered_texture.name, 0)
 
         if gl.glCheckFramebufferStatus(gl.GL_FRAMEBUFFER) != gl.GL_FRAMEBUFFER_COMPLETE:
             raise ValueError('Framebuffer not set up completely')
 
         gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
 
-    def begin_draw(self):
+
+    def __enter__(self):
         gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.framebuffer)
         draw_buffers = (gl.GLenum * 1)(gl.GL_COLOR_ATTACHMENT0)
         gl.glDrawBuffers(1, draw_buffers)
+        gl.glViewport(0, 0, FB_WIDTH, FB_HEIGHT)
 
-    def end_draw(self):
-        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, self.framebuffer)
+
+    def __exit__(self, *unused):
+        gl.glBindFramebuffer(gl.GL_FRAMEBUFFER, 0)
+        gl.glViewport(0, 0, window.width, window.height)
 
 
 def main():
