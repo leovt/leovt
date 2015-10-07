@@ -6,6 +6,7 @@ Example code for using glsl and vertex buffer objects with pyglet
 '''
 
 import sys
+import warnings
 import pyglet
 from pyglet import gl
 import ctypes
@@ -106,7 +107,7 @@ class ShaderProgram:
             location = gl.glGetAttribLocation(self.program_name,
                                               ctypes.create_string_buffer(name.encode('ascii')))
             if location < 0:
-                raise Warning('Attribute %s is not present.' % name)
+                warnings.warn('Attribute %r is not present.' % name, stacklevel=2)
                 continue
             gl.glEnableVertexAttribArray(location)
             gl.glVertexAttribPointer(location, size, tname, False,
