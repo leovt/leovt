@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <style>
+      .score {
+        transition: all 1.5s ease-out;
+        background: lightblue;
+      }
+
+      .score.hit {
+        transition: none;
+        background: crimson;
+        color: white;
+      }
+    </style>
+    <script>
+      function addPoints() {
+        var element = document.getElementById('sc1');
+        element.innerText = (+element.innerText) + 100;
+        element.classList.add('hit');
+        window.setTimeout( () => element.classList.remove('hit'), 50);
+      }
+    </script>
+  </head>
+  <body>
+    <p>Score: <span class="score" id="sc1">0</span></p>
+    <p><button onclick="addPoints()">Add Points</button></p>
+  </body>
+</html>
