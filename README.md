@@ -15,4 +15,10 @@ Constructible numbers are the lengths you can construct by ruler and compass. It
 
 This library is published on [PyPI](https://pypi.org/project/constructible/) and uses TravisCI for integration testing.
 
+### [car](https://github.com/leovt/constructible) - A minigame running in the browser
+A small game demonstrating interactive graphics in the browser with svg and javascript. 
+[Try it out!](https://leovt.github.io/car/car.svg)
 
+### [sicp](https://github.com/leovt/sicp) - Creating an Ebook in epub format
+A HTML version of the book "Structure and Interpretation of Computer Programs" is available for free under a CC license. In order to read it on my ebook 
+reading device I transformed the HTML version into the epub format using Python. 
