@@ -8,6 +8,8 @@ Recently I am checking out Jupyter notebooks as a way to provide interactive das
 Two works in progress can be tried out interactively on the mybinder service. (The free binder service is sometimes slow to start up the interactive notebooks)
   * Using Jupyter and Pandas for actuarial calculations: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/leovt/actuarial/master?filepath=projection.ipynb)
   * Using Jupyter and numpy for numerical analysis of differential equations: [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/leovt/cosserat/main?filepath=Interactive.ipynb)
+  
+    ![Screenshot of Bifurcation Diagram](https://raw.githubusercontent.com/leovt/cosserat/main/BifurcationDiagramSmall.png)
   * Written a small neural network and a Jupyter notebook that uses it to train recognizing handwritten numbers [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/leovt/neural/master?filepath=Neural%20Network%20for%20MNIST.ipynb) Training is very slow on mybinder.org (approx. 1 hr) but faster locally (approx. 2 minutes)
 
 # Check out my profile
